@@ -1,6 +1,6 @@
 import got from 'got';
 import yargs from 'yargs';
-
+import {year, month, day, dayOfWeekStr} from './today';
 const argv = yargs
   .usage('$0 <cmd> [args]')
   .option('slack-token', {
@@ -69,6 +69,7 @@ console.log(
       token: slackToken,
       channel: slackChannel,
       attachments: issuesData,
+      text: `${year}/${month}/${day}(${dayOfWeekStr}) 合計時間：`,
     };
 
     await got.post('https://slack.com/api/chat.postMessage', {
