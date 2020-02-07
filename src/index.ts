@@ -4,6 +4,7 @@ import yargs from 'yargs';
 const argv = yargs
   .usage('$0 <cmd> [args]')
   .option('slack-token', {
+    demandOption: true,
     describe: "slack's token",
     type: 'string',
   })
@@ -13,14 +14,17 @@ const argv = yargs
     type: 'string',
   })
   .option('backlog-api-key', {
+    demandOption: true,
     describe: "backlog's api key",
     type: 'string',
   })
   .option('backlog-space', {
+    demandOption: true,
     describe: "backlog's space name",
     type: 'string',
   })
   .option('backlog-user-id', {
+    demandOption: true,
     describe: "backlog's userid",
     type: 'string',
   })

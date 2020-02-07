@@ -5,7 +5,10 @@
   "author": "ellreka",
   "license": "MIT",
   "scripts": {
-    "dev": "parcel watch ./src/index.ts --out-dir ./dist --no-cache --target node --bundle-node-modules"
+    "dev": "parcel watch ./src/index.ts --out-dir ./dist --no-cache --target node"
+  },
+  "bin": {
+    "spbt": "./bin/cli.js"
   },
   "devDependencies": {
     "@types/node": "^13.7.0",
