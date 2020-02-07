@@ -1,5 +1,7 @@
 import got from 'got';
 import yargs from 'yargs';
+import readlineSync from 'readline-sync';
+import terminalLink from 'terminal-link';
 import {year, month, day, dayOfWeekStr} from './date';
 const argv = yargs
   .usage('$0 <cmd> [args]')
@@ -36,13 +38,7 @@ const {
   backlogApiKey,
   backlogUserId,
 } = argv;
-console.log(
-  slackToken,
-  slackChannel,
-  backlogSpace,
-  backlogApiKey,
-  backlogUserId,
-);
+
 (async () => {
   try {
     const response = await got(
@@ -57,19 +53,58 @@ console.log(
           name: string;
         };
       }) => {
+        const issueLink = `https://${backlogSpace}.backlog.jp/view/${val.issueKey}`;
+        const keyLinkText = terminalLink(val.issueKey, issueLink);
+        const time = readlineSync.questionFloat(
+          `\nkey：${keyLinkText}\nsummary：${val.summary}\n所要時間：`,
+        );
         return {
-          title: val.issueKey,
-          title_link: `https://geek.backlog.jp/view/${val.issueKey}`,
-          text: `${val.summary}\n優先度：${val.priority.name}\n予定時間：1h`,
+          issue_key: val.issueKey,
+          issue_link: issueLink,
+          summary: val.summary,
+          priority: val.priority.name,
+          time: time,
         };
       },
     );
-    console.log(issuesData);
+
+    const totalTime = issuesData.reduce(
+      (
+        result: {
+          time: number;
+        },
+        current: {
+          time: number;
+        },
+      ) => {
+        return result.time + current.time;
+      },
+    );
+
+    const attachmentsObject = issuesData.map(
+      (val: {
+        issue_key: string;
+        issue_link: string;
+        summary: string;
+        priority: {
+          id: number;
+          name: string;
+        };
+        time: number;
+      }) => {
+        return {
+          title: val.issue_key,
+          title_link: val.issue_link,
+          text: `${val.summary}\n[優先度]：${val.priority}\n[予定時間]：${val.time}h`,
+          color: '#42ce9f',
+        };
+      },
+    );
     const params = {
       token: slackToken,
       channel: slackChannel,
-      attachments: issuesData,
-      text: `${year}/${month}/${day}(${dayOfWeekStr}) 合計時間：`,
+      text: `*${year}/${month}/${day}(${dayOfWeekStr}) 合計時間：${totalTime}h*`,
+      attachments: attachmentsObject,
     };
 
     await got.post('https://slack.com/api/chat.postMessage', {
