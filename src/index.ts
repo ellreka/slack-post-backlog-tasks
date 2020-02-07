@@ -1,6 +1,6 @@
 import got from 'got';
 import yargs from 'yargs';
-import {year, month, day, dayOfWeekStr} from './today';
+import {year, month, day, dayOfWeekStr} from './date';
 const argv = yargs
   .usage('$0 <cmd> [args]')
   .option('slack-token', {
