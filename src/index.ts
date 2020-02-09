@@ -74,15 +74,12 @@ const {
 
       const totalTime = issuesData.reduce(
         (
-          result: {
-            time: number;
-          },
+          result: number,
           current: {
             time: number;
           },
-        ) => {
-          return result.time + current.time;
-        },
+        ) => result + current.time,
+        0,
       );
 
       const attachmentsObject = issuesData.map(
