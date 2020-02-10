@@ -41,10 +41,10 @@ const {
 
 (async () => {
   try {
-    const response = await got(
+    const backlogResponse = await got(
       `https://${backlogHost}/api/v2/issues?apiKey=${backlogApiKey}&assigneeId[]=${backlogUserId}&startDateUntil=${year}-${month}-${day}&statusId[]=1&statusId[]=2&statusId[]=3&sort=priority`,
     );
-    const body = JSON.parse(response.body);
+    const body = JSON.parse(backlogResponse.body);
     if (body.length === 0) {
       console.log('タスクはありませんでした');
     } else {
@@ -101,7 +101,7 @@ const {
           };
         },
       );
-      const params = {
+      const slackParams = {
         token: slackToken,
         channel: slackChannel,
         text: `*${year}/${month}/${day}(${dayOfWeekStr}) 合計時間：${totalTime}h*`,
@@ -113,7 +113,7 @@ const {
           'content-type': 'application/json',
           Authorization: `Bearer ${slackToken}`,
         },
-        json: params,
+        json: slackParams,
       });
     }
   } catch (error) {
