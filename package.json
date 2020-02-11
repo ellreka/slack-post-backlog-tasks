@@ -12,6 +12,7 @@
     "spbt": "./bin/cli.js"
   },
   "devDependencies": {
+    "@types/inquirer": "^6.5.0",
     "@types/node": "^13.7.0",
     "@types/readline-sync": "^1.4.3",
     "@types/yargs": "^15.0.3",
@@ -20,6 +21,7 @@
   },
   "dependencies": {
     "got": "^10.5.2",
+    "inquirer": "^7.0.4",
     "readline-sync": "^1.4.10",
     "terminal-link": "^2.1.1",
     "yargs": "^15.1.0"

@@ -1,8 +1,13 @@
 import got from 'got';
 import yargs from 'yargs';
+import inquirer from 'inquirer';
 import readlineSync from 'readline-sync';
 import terminalLink from 'terminal-link';
 import {year, month, day, dayOfWeekStr} from './date';
+import {getBacklogActivities, getBacklogIssues} from './backlog';
+import {postSlackDaily, postSlackTimes} from './slack';
+import {backlogIssuesType, backlogActivitiesType} from './interface';
+
 const argv = yargs
   .usage('$0 <cmd> [args]')
   .option('slack-token', {
@@ -31,37 +36,43 @@ const argv = yargs
     type: 'string',
   })
   .help().argv;
-const {
-  slackToken,
-  slackChannel,
-  backlogHost,
-  backlogApiKey,
-  backlogUserId,
-} = argv;
 
 (async () => {
   try {
-    const backlogResponse = await got(
-      `https://${backlogHost}/api/v2/issues?apiKey=${backlogApiKey}&assigneeId[]=${backlogUserId}&startDateUntil=${year}-${month}-${day}&statusId[]=1&statusId[]=2&statusId[]=3&sort=priority`,
-    );
-    const body = JSON.parse(backlogResponse.body);
-    if (body.length === 0) {
-      console.log('タスクはありませんでした');
-    } else {
-      const issuesData = body.map(
-        (val: {
-          issueKey: string;
-          summary: string;
-          priority: {
-            id: number;
-            name: string;
-          };
-        }) => {
-          const issueLink = `https://${backlogHost}/view/${val.issueKey}`;
+    const postType = await inquirer.prompt([
+      {
+        name: 'name',
+        choices: ['times', 'daily'],
+        type: 'list',
+      },
+    ]);
+
+    if (postType.name === 'times') {
+      const backlogParams = {
+        host: argv['backlog-host'],
+        userid: argv['backlog-user-id'],
+        apikey: argv['backlog-api-key'],
+        startDateUntil: `${year}-${month}-${day}`,
+      };
+
+      const response = await getBacklogIssues(backlogParams);
+
+      const backlogResponse: Array<backlogIssuesType> = JSON.parse(
+        response.body,
+      );
+
+      if (backlogResponse.length === 0) {
+        console.log('タスクはありませんでした');
+      } else {
+        const issuesData = backlogResponse.map(val => {
+          const issueLink = `https://${argv['backlog-host']}/view/${val.issueKey}`;
+
           const keyLinkText = terminalLink(val.issueKey, issueLink);
+
           const time = readlineSync.questionFloat(
             `\n[課題キー]${keyLinkText}\n[概要]${val.summary}\n[予定時間]`,
           );
+
           return {
             issue_key: val.issueKey,
             issue_link: issueLink,
@@ -69,54 +80,77 @@ const {
             priority: val.priority.name,
             time: time,
           };
-        },
-      );
+        });
 
-      const totalTime = issuesData.reduce(
-        (
-          result: number,
-          current: {
-            time: number;
-          },
-        ) => result + current.time,
-        0,
-      );
+        const totalTime = issuesData.reduce(
+          (
+            result: number,
+            current: {
+              time: number;
+            },
+          ) => result + current.time,
+          0,
+        );
 
-      const attachmentsObject = issuesData.map(
-        (val: {
-          issue_key: string;
-          issue_link: string;
-          summary: string;
-          priority: {
-            id: number;
-            name: string;
-          };
-          time: number;
-        }) => {
+        const attachmentsObject = issuesData.map(val => {
           return {
             title: val.issue_key,
             title_link: val.issue_link,
             text: `[概要]${val.summary}\n[優先度]${val.priority}\n[予定時間]${val.time}h`,
             color: '#42ce9f',
           };
-        },
-      );
-      const slackParams = {
-        token: slackToken,
-        channel: slackChannel,
-        text: `*${year}/${month}/${day}(${dayOfWeekStr}) 合計時間：${totalTime}h*`,
-        attachments: attachmentsObject,
+        });
+
+        const slackParams = {
+          token: argv['slack-token'],
+          channel: argv['slack-channel'],
+          text: `*${year}/${month}/${day}(${dayOfWeekStr}) 合計時間：${totalTime}h*`,
+          attachments: attachmentsObject,
+        };
+        postSlackTimes(slackParams);
+      }
+    } else if (postType.name === 'daily') {
+      const backlogParams = {
+        host: argv['backlog-host'],
+        userid: argv['backlog-user-id'],
+        apikey: argv['backlog-api-key'],
+        activityTypeId: 2,
       };
 
-      await got.post('https://slack.com/api/chat.postMessage', {
-        headers: {
-          'content-type': 'application/json',
-          Authorization: `Bearer ${slackToken}`,
-        },
-        json: slackParams,
-      });
+      const response = await getBacklogActivities(backlogParams);
+
+      const backlogResponse: Array<backlogActivitiesType> = JSON.parse(
+        response.body,
+      );
+
+      const todayTasks = backlogResponse
+        .filter((val, index, self) => {
+          return (
+            val.created.split('T')[0] === `${year}-${month}-${day}` &&
+            self.findIndex(val2 => val.project.id === val2.project.id) === index
+          );
+        })
+        .map(val => {
+          return `- ${val.project.projectKey}-${val.content.key_id} ${val.content.summary}\n`;
+        });
+
+      const thoughts = readlineSync.question('【思ったこと】\n');
+
+      const slackPostContent = `【やったこと】\n${todayTasks.join(
+        '',
+      )}【思ったこと】\n${thoughts}\n\n\n【次回やること】\n`;
+
+      const slackParams = {
+        token: argv['slack-token'],
+        channels: argv['slack-channel'],
+        title: `【日報】${year}-${month}-${day}`,
+        content: slackPostContent,
+        filetype: 'post',
+      };
+
+      postSlackDaily(slackParams);
     }
   } catch (error) {
-    console.log(error.response.body);
+    console.log(error);
   }
 })();
