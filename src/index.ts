@@ -1,4 +1,3 @@
-import got from 'got';
 import yargs from 'yargs';
 import inquirer from 'inquirer';
 import readlineSync from 'readline-sync';
