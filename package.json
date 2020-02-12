@@ -6,7 +6,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "parcel watch ./src/index.ts --out-dir ./dist --no-cache --target node --no-source-maps",
-    "build": "parcel build ./src/index.ts --out-dir ./dist --no-cache --target node --no-source-maps"
+    "build": "parcel build ./src/index.ts --out-dir ./dist --no-cache --target node --no-source-maps",
+    "prepare": "yarn build"
   },
   "bin": {
     "spbt": "./bin/cli.js"
