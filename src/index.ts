@@ -38,15 +38,16 @@ const argv = yargs
 
 (async () => {
   try {
-    const postType = await inquirer.prompt([
+    const getType = await inquirer.prompt([
       {
-        name: 'name',
-        choices: ['times', 'daily'],
+        name: 'type',
+        choices: ['times', 'daily-report'],
         type: 'list',
+        message: 'which post type?',
       },
     ]);
 
-    if (postType.name === 'times') {
+    if (getType.type === 'times') {
       const backlogParams = {
         host: argv['backlog-host'],
         userid: argv['backlog-user-id'],
@@ -82,12 +83,7 @@ const argv = yargs
         });
 
         const totalTime = issuesData.reduce(
-          (
-            result: number,
-            current: {
-              time: number;
-            },
-          ) => result + current.time,
+          (result, current) => result + current.time,
           0,
         );
 
@@ -108,7 +104,7 @@ const argv = yargs
         };
         postSlackTimes(slackParams);
       }
-    } else if (postType.name === 'daily') {
+    } else if (getType.type === 'daily-report') {
       const backlogParams = {
         host: argv['backlog-host'],
         userid: argv['backlog-user-id'],
@@ -130,14 +126,21 @@ const argv = yargs
           );
         })
         .map(val => {
-          return `- ${val.project.projectKey}-${val.content.key_id} ${val.content.summary}\n`;
+          const projectKey = `${val.project.projectKey}-${val.content.key_id}`;
+          return `- [${projectKey}](https://${argv['backlog-host']}/view/${projectKey}) ${val.content.summary}\n`;
         });
 
-      const thoughts = readlineSync.question('【思ったこと】\n');
+      const getThoughts = await inquirer.prompt([
+        {
+          name: 'thoughts',
+          type: 'editor',
+          message: '【思ったこと】を入力する',
+        },
+      ]);
 
       const slackPostContent = `【やったこと】\n${todayTasks.join(
         '',
-      )}【思ったこと】\n${thoughts}\n\n\n【次回やること】\n`;
+      )}【思ったこと】\n${getThoughts.thoughts}\n\n\n【次回やること】\n`;
 
       const slackParams = {
         token: argv['slack-token'],
