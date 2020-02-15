@@ -34,6 +34,11 @@ const argv = yargs
     describe: "backlog's userid",
     type: 'string',
   })
+  .option('post-type', {
+    alias: 't',
+    describe: 'times or daily-report',
+    type: 'string',
+  })
   .help().argv;
 
 (async () => {
