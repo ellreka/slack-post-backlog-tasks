@@ -43,16 +43,23 @@ const argv = yargs
 
 (async () => {
   try {
-    const getType = await inquirer.prompt([
-      {
-        name: 'type',
-        choices: ['times', 'daily-report'],
-        type: 'list',
-        message: 'which post type?',
-      },
-    ]);
+    let postType: string | undefined = '';
+    console.log(argv['post-type']);
+    if (argv['post-type'] === 'times' || 'daily-report') {
+      postType = argv['post-type'];
+    } else {
+      const getType = await inquirer.prompt([
+        {
+          name: 'type',
+          choices: ['times', 'daily-report'],
+          type: 'list',
+          message: 'which post type?',
+        },
+      ]);
+      postType = getType.type;
+    }
 
-    if (getType.type === 'times') {
+    if (postType === 'times') {
       const backlogParams = {
         host: argv['backlog-host'],
         userid: argv['backlog-user-id'],
@@ -109,7 +116,7 @@ const argv = yargs
         };
         postSlackTimes(slackParams);
       }
-    } else if (getType.type === 'daily-report') {
+    } else if (postType === 'daily-report') {
       const backlogParams = {
         host: argv['backlog-host'],
         userid: argv['backlog-user-id'],
