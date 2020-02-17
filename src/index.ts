@@ -47,14 +47,15 @@ const argv = yargs
       if (val === 'times' || val === 'daily-report') {
         return val
       } else {
-        return (await inquirer.prompt([
+        const {type} = await inquirer.prompt([
           {
             name: 'type',
             choices: ['times', 'daily-report'],
             type: 'list',
             message: 'which post type?',
           },
-        ])).type;
+        ])
+        return type;
       }
     }
 
