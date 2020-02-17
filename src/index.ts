@@ -43,21 +43,22 @@ const argv = yargs
 
 (async () => {
   try {
-    let postType: string | undefined = '';
-    console.log(argv['post-type']);
-    if (argv['post-type'] === 'times' || 'daily-report') {
-      postType = argv['post-type'];
-    } else {
-      const getType = await inquirer.prompt([
-        {
-          name: 'type',
-          choices: ['times', 'daily-report'],
-          type: 'list',
-          message: 'which post type?',
-        },
-      ]);
-      postType = getType.type;
+    const getPostType = async (val: string|undefined) => {
+      if (val === 'times' || val === 'daily-report') {
+        return val
+      } else {
+        return (await inquirer.prompt([
+          {
+            name: 'type',
+            choices: ['times', 'daily-report'],
+            type: 'list',
+            message: 'which post type?',
+          },
+        ])).type;
+      }
     }
+
+    const postType = await getPostType(argv['post-type']);
 
     if (postType === 'times') {
       const backlogParams = {
