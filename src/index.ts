@@ -4,7 +4,7 @@ import readlineSync from 'readline-sync';
 import terminalLink from 'terminal-link';
 import {year, month, day, dayOfWeekStr} from './date';
 import {getBacklogActivities, getBacklogIssues} from './backlog';
-import {postSlackDaily, postSlackTimes} from './slack';
+import {postSlackFilesUpload, postSlackMessage} from './slack';
 import {backlogIssuesType, backlogActivitiesType} from './interface';
 
 const argv = yargs
@@ -43,9 +43,9 @@ const argv = yargs
 
 (async () => {
   try {
-    const getPostType = async (val: string|undefined) => {
+    const getPostType = async (val: string | undefined) => {
       if (val === 'times' || val === 'daily-report') {
-        return val
+        return val;
       } else {
         const {type} = await inquirer.prompt([
           {
@@ -54,10 +54,10 @@ const argv = yargs
             type: 'list',
             message: 'which post type?',
           },
-        ])
+        ]);
         return type;
       }
-    }
+    };
 
     const postType = await getPostType(argv['post-type']);
 
@@ -83,40 +83,131 @@ const argv = yargs
 
           const keyLinkText = terminalLink(val.issueKey, issueLink);
 
-          const time = readlineSync.questionFloat(
-            `\n[課題キー]${keyLinkText}\n[概要]${val.summary}\n[予定時間]`,
-          );
+          // const time = readlineSync.questionFloat(
+          //   `\n[課題キー]${keyLinkText}\n[概要]${val.summary}\n[予定時間]`,
+          // );
 
           return {
             issue_key: val.issueKey,
             issue_link: issueLink,
             summary: val.summary,
             priority: val.priority.name,
-            time: time,
+            // time: time,
           };
         });
 
-        const totalTime = issuesData.reduce(
-          (result, current) => result + current.time,
-          0,
-        );
-
-        const attachmentsObject = issuesData.map(val => {
+        // const totalTime = issuesData.reduce(
+        //   (result, current) => result + current.time,
+        //   0,
+        // );
+        let blocksArray = [];
+        issuesData.forEach(val => {
+          blocksArray.push(
+            {
+              type: 'divider',
+            },
+            {
+              type: 'section',
+              text: {
+                type: 'mrkdwn',
+                text: `<${val.issue_link}|${val.issue_key}>\n${val.summary}\n[優先度]${val.priority}`,
+              },
+              accessory: {
+                type: 'static_select',
+                initial_option: {
+                  value: 'option_01',
+                  text: {
+                    type: 'plain_text',
+                    text: '未対応',
+                  },
+                },
+                options: [
+                  {
+                    value: 'option_01',
+                    text: {
+                      type: 'plain_text',
+                      text: '未対応',
+                    },
+                  },
+                  {
+                    value: 'option_02',
+                    text: {
+                      type: 'plain_text',
+                      text: '処理中',
+                    },
+                  },
+                  {
+                    value: 'option_03',
+                    text: {
+                      type: 'plain_text',
+                      text: '完了',
+                    },
+                  },
+                  {
+                    value: 'option_04',
+                    text: {
+                      type: 'plain_text',
+                      text: '保留',
+                    },
+                  },
+                ],
+              },
+            },
+          );
+        });
+        const blockObject = issuesData.map(val => {
           return {
-            title: val.issue_key,
-            title_link: val.issue_link,
-            text: `[概要]${val.summary}\n[優先度]${val.priority}\n[予定時間]${val.time}h`,
-            color: '#42ce9f',
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: `<${val.issue_link}|${val.issue_key}>\n${val.summary}\n[優先度]${val.priority}`,
+            },
+            accessory: {
+              type: 'static_select',
+              options: [
+                {
+                  text: {
+                    type: 'plain_text',
+                    text: '未処理',
+                    emoji: true,
+                  },
+                  value: 'value-0',
+                },
+                {
+                  text: {
+                    type: 'plain_text',
+                    text: '処理中',
+                    emoji: true,
+                  },
+                  value: 'value-1',
+                },
+                {
+                  text: {
+                    type: 'plain_text',
+                    text: '完了',
+                    emoji: true,
+                  },
+                  value: 'value-2',
+                },
+                {
+                  text: {
+                    type: 'plain_text',
+                    text: '保留',
+                    emoji: true,
+                  },
+                  value: 'value-3',
+                },
+              ],
+            },
           };
         });
-
+        console.log(blocksArray);
         const slackParams = {
           token: argv['slack-token'],
           channel: argv['slack-channel'],
-          text: `*${year}/${month}/${day}(${dayOfWeekStr}) 合計時間：${totalTime}h*`,
-          attachments: attachmentsObject,
+          blocks: blocksArray,
         };
-        postSlackTimes(slackParams);
+        postSlackMessage(slackParams);
       }
     } else if (postType === 'daily-report') {
       const backlogParams = {
@@ -164,7 +255,7 @@ const argv = yargs
         filetype: 'post',
       };
 
-      postSlackDaily(slackParams);
+      postSlackFilesUpload(slackParams);
     }
   } catch (error) {
     console.log(error);

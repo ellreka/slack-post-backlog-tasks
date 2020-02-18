@@ -10,12 +10,7 @@ export interface slackTimesParams {
   token: string;
   channel: string;
   text: string;
-  attachments: {
-    title: string;
-    title_link: string;
-    text: string;
-    color: string;
-  }[];
+  block: Array<{}>;
 }
 
 export interface backlogActivitiesParams {

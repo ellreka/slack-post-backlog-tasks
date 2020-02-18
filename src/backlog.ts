@@ -14,7 +14,7 @@ export const getBacklogActivities = (params: backlogActivitiesParams) => {
 
 export const getBacklogIssues = (params: backlogIssuesParams) => {
   return got(
-    `https://${params.host}/api/v2/issues?apiKey=${params.apikey}&assigneeId[]=${params.userid}&startDateUntil=${params.startDateUntil}&statusId[]=1&statusId[]=2&statusId[]=3&sort=priority`,
+    `https://${params.host}/api/v2/issues?apiKey=${params.apikey}&assigneeId[]=${params.userid}&startDateUntil=${params.startDateUntil}&statusId[]=1&statusId[]=2&statusId[]=3&sort=priority&order=asc`,
     {
       headers: {
         'content-type': 'application/json',
