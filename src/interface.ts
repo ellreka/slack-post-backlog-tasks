@@ -9,8 +9,7 @@ export interface slackDailyParams {
 export interface slackTimesParams {
   token: string;
   channel: string;
-  text: string;
-  block: Array<{}>;
+  blocks: Array<{}>;
 }
 
 export interface backlogActivitiesParams {

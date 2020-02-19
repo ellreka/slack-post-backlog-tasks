@@ -5,7 +5,11 @@ import terminalLink from 'terminal-link';
 import {year, month, day, dayOfWeekStr} from './date';
 import {getBacklogActivities, getBacklogIssues} from './backlog';
 import {postSlackFilesUpload, postSlackMessage} from './slack';
-import {backlogIssuesType, backlogActivitiesType} from './interface';
+import {
+  backlogIssuesType,
+  slackTimesParams,
+  backlogActivitiesType,
+} from './interface';
 
 const argv = yargs
   .usage('$0 <cmd> [args]')
@@ -80,13 +84,6 @@ const argv = yargs
       } else {
         const issuesData = backlogResponse.map(val => {
           const issueLink = `https://${argv['backlog-host']}/view/${val.issueKey}`;
-
-          const keyLinkText = terminalLink(val.issueKey, issueLink);
-
-          // const time = readlineSync.questionFloat(
-          //   `\n[課題キー]${keyLinkText}\n[概要]${val.summary}\n[予定時間]`,
-          // );
-
           return {
             issue_key: val.issueKey,
             issue_link: issueLink,
@@ -96,11 +93,7 @@ const argv = yargs
           };
         });
 
-        // const totalTime = issuesData.reduce(
-        //   (result, current) => result + current.time,
-        //   0,
-        // );
-        let blocksArray = [];
+        let blocksArray: Array<{}> = [];
         issuesData.forEach(val => {
           blocksArray.push(
             {
@@ -155,53 +148,7 @@ const argv = yargs
             },
           );
         });
-        const blockObject = issuesData.map(val => {
-          return {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: `<${val.issue_link}|${val.issue_key}>\n${val.summary}\n[優先度]${val.priority}`,
-            },
-            accessory: {
-              type: 'static_select',
-              options: [
-                {
-                  text: {
-                    type: 'plain_text',
-                    text: '未処理',
-                    emoji: true,
-                  },
-                  value: 'value-0',
-                },
-                {
-                  text: {
-                    type: 'plain_text',
-                    text: '処理中',
-                    emoji: true,
-                  },
-                  value: 'value-1',
-                },
-                {
-                  text: {
-                    type: 'plain_text',
-                    text: '完了',
-                    emoji: true,
-                  },
-                  value: 'value-2',
-                },
-                {
-                  text: {
-                    type: 'plain_text',
-                    text: '保留',
-                    emoji: true,
-                  },
-                  value: 'value-3',
-                },
-              ],
-            },
-          };
-        });
-        console.log(blocksArray);
+
         const slackParams = {
           token: argv['slack-token'],
           channel: argv['slack-channel'],
