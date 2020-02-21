@@ -9,28 +9,30 @@ export interface slackDailyParams {
 export interface slackTimesParams {
   token: string;
   channel: string;
-  blocks: {
-    type?: string;
-    text?: {
-      type: string;
-      text: string;
-    };
-    accessory?: {
-      type: string;
-      initial_option: {
+  attachments: {
+    blocks: {
+      type?: string;
+      text?: {
+        type: string;
+        text: string;
+      };
+      accessory?: {
+        type: string;
+        initial_option: {
+          value: string;
+          text: {
+            type: string;
+            text: string;
+          };
+        };
+      };
+      options?: {
         value: string;
         text: {
           type: string;
           text: string;
         };
-      };
-    };
-    options?: {
-      value: string;
-      text: {
-        type: string;
-        text: string;
-      };
+      }[];
     }[];
   }[];
 }

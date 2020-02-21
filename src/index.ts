@@ -43,6 +43,11 @@ const argv = yargs
     describe: 'times or daily-report',
     type: 'string',
   })
+  .option('skip-input', {
+    alias: 's',
+    describe: 'skip input',
+    type: 'boolean',
+  })
   .help().argv;
 
 (async () => {
@@ -84,75 +89,135 @@ const argv = yargs
       } else {
         const issuesData = backlogResponse.map(val => {
           const issueLink = `https://${argv['backlog-host']}/view/${val.issueKey}`;
+          let time = 0;
+          if (!argv['skip-input']) {
+            time = readlineSync.questionFloat(
+              `${val.issueKey}\n${val.summary}\n:`,
+            );
+          }
           return {
             issue_key: val.issueKey,
             issue_link: issueLink,
             summary: val.summary,
-            priority: val.priority.name,
-            // time: time,
+            time: time,
           };
         });
-
-        let blocksArray: Array<{}> = [];
-        issuesData.forEach(val => {
-          blocksArray.push(
-            {
-              type: 'divider',
-            },
-            {
-              type: 'section',
-              text: {
-                type: 'mrkdwn',
-                text: `<${val.issue_link}|${val.issue_key}>\n${val.summary}\n[優先度]${val.priority}`,
-              },
-              accessory: {
-                type: 'static_select',
-                initial_option: {
-                  value: 'option_01',
-                  text: {
-                    type: 'plain_text',
-                    text: '未対応',
-                  },
+        const attachmentsArray = issuesData.map(val => {
+          return {
+            color: '#42ce9f',
+            blocks: [
+              {
+                type: 'section',
+                text: {
+                  type: 'mrkdwn',
+                  text: `<${val.issue_link}|${val.issue_key}>\n${val.summary}`,
                 },
-                options: [
-                  {
-                    value: 'option_01',
+                accessory: {
+                  type: 'static_select',
+                  initial_option: {
+                    value: `${val.time}`,
                     text: {
                       type: 'plain_text',
-                      text: '未対応',
+                      text: `${val.time}%`,
                     },
                   },
-                  {
-                    value: 'option_02',
-                    text: {
-                      type: 'plain_text',
-                      text: '処理中',
+                  options: [
+                    {
+                      value: '0',
+                      text: {
+                        type: 'plain_text',
+                        text: '0%',
+                      },
                     },
-                  },
-                  {
-                    value: 'option_03',
-                    text: {
-                      type: 'plain_text',
-                      text: '完了',
+                    {
+                      value: '5',
+                      text: {
+                        type: 'plain_text',
+                        text: '5%',
+                      },
                     },
-                  },
-                  {
-                    value: 'option_04',
-                    text: {
-                      type: 'plain_text',
-                      text: '保留',
+                    {
+                      value: '10',
+                      text: {
+                        type: 'plain_text',
+                        text: '10%',
+                      },
                     },
-                  },
-                ],
+                    {
+                      value: '20',
+                      text: {
+                        type: 'plain_text',
+                        text: '20%',
+                      },
+                    },
+                    {
+                      value: '30',
+                      text: {
+                        type: 'plain_text',
+                        text: '30%',
+                      },
+                    },
+                    {
+                      value: '40',
+                      text: {
+                        type: 'plain_text',
+                        text: '40%',
+                      },
+                    },
+                    {
+                      value: '50',
+                      text: {
+                        type: 'plain_text',
+                        text: '50%',
+                      },
+                    },
+                    {
+                      value: '60',
+                      text: {
+                        type: 'plain_text',
+                        text: '60%',
+                      },
+                    },
+                    {
+                      value: '70',
+                      text: {
+                        type: 'plain_text',
+                        text: '70%',
+                      },
+                    },
+                    {
+                      value: '80',
+                      text: {
+                        type: 'plain_text',
+                        text: '80%',
+                      },
+                    },
+                    {
+                      value: '90',
+                      text: {
+                        type: 'plain_text',
+                        text: '90%',
+                      },
+                    },
+                    {
+                      value: '100',
+                      text: {
+                        type: 'plain_text',
+                        text: '100%',
+                      },
+                    },
+                  ],
+                },
               },
-            },
-          );
+            ],
+          };
         });
 
         const slackParams = {
           token: argv['slack-token'],
           channel: argv['slack-channel'],
-          blocks: blocksArray,
+          text: `*${year}/${month}/${day}(${dayOfWeekStr})*`,
+          attachments: attachmentsArray,
         };
         postSlackMessage(slackParams);
       }
@@ -182,23 +247,29 @@ const argv = yargs
           return `- [${projectKey}](https://${argv['backlog-host']}/view/${projectKey}) ${val.content.summary}\n`;
         });
 
-      const getThoughts = await inquirer.prompt([
-        {
-          name: 'thoughts',
-          type: 'editor',
-          message: '【思ったこと】を入力する',
-        },
-      ]);
-
-      const slackPostContent = `【やったこと】\n${todayTasks.join(
-        '',
-      )}【思ったこと】\n${getThoughts.thoughts}\n\n\n【次回やること】\n`;
+      let postMessage = '';
+      if (argv['skip-input']) {
+        postMessage += `【やったこと】\n${todayTasks.join(
+          '',
+        )}\n【思ったこと】\n\n【次回やること】\n`;
+      } else {
+        const getThoughts = await inquirer.prompt([
+          {
+            name: 'thoughts',
+            type: 'editor',
+            message: '【思ったこと】を入力する',
+          },
+        ]);
+        postMessage += `【やったこと】\n${todayTasks.join(
+          '',
+        )}\n【思ったこと】\n${getThoughts.thoughts}\n\n【次回やること】\n`;
+      }
 
       const slackParams = {
         token: argv['slack-token'],
         channels: argv['slack-channel'],
         title: `【日報】${year}-${month}-${day}`,
-        content: slackPostContent,
+        content: postMessage,
         filetype: 'post',
       };
 
