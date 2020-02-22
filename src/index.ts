@@ -216,7 +216,7 @@ const argv = yargs
         const slackParams = {
           token: argv['slack-token'],
           channel: argv['slack-channel'],
-          text: `*${year}/${month}/${day}(${dayOfWeekStr})*`,
+          text: `${year}/${month}/${day}(${dayOfWeekStr})`,
           attachments: attachmentsArray,
         };
         postSlackMessage(slackParams);
