@@ -3,12 +3,7 @@
 ## install
 
 ```bash
-npm i -g spbt
-or
-yarn global add spbt
-```
-```bash
-spbt \
+npx spbt \
   --slack-token xoxp-xXxXx \
   --slack-channel xXxXx \
   --backlog-api-key xXxXx \
