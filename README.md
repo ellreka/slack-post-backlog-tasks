@@ -11,6 +11,6 @@ npx spbt \
   --backlog-user-id 123456
   
   Options:
-  --post-type -t times or daily-report
+  --post-type -t `times` or `daily-report`
   --skip-input -s skip input
 ```
