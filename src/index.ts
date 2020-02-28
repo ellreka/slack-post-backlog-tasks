@@ -99,7 +99,7 @@ const argv = yargs
             issue_key: val.issueKey,
             issue_link: issueLink,
             summary: val.summary,
-            time: time,
+            time: Math.round(time / 10) * 10,
           };
         });
         const attachmentsArray = issuesData.map(val => {
