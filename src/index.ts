@@ -213,7 +213,7 @@ const argv = yargs
           };
         });
 
-        const slackParams = {
+        const slackParams: slackTimesParams = {
           token: argv['slack-token'],
           channel: argv['slack-channel'],
           text: `${year}/${month}/${day}(${dayOfWeekStr})`,
